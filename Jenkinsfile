@@ -64,68 +64,11 @@ pipeline {
         }
 
         stage('Package') {
-            steps {
-                echo 'Creating application package'
-
-                script {
-                    def files = [
-                        'index.html',
-                        'style.css',
-                        'script.js'
-                    ]
-
-                    def zipFile = new File('railway-reservation.zip')
-
-                    if (zipFile.exists()) {
-                        zipFile.delete()
-                    }
-
-                    def zipOutputStream =
-                        new java.util.zip.ZipOutputStream(
-                            new java.io.FileOutputStream(zipFile)
-                        )
-
-                    try {
-                        files.each { fileName ->
-                            def file = new File(fileName)
-
-                            if (!file.exists()) {
-                                error("ERROR: ${fileName} not found")
-                            }
-
-                            def entry =
-                                new java.util.zip.ZipEntry(fileName)
-
-                            zipOutputStream.putNextEntry(entry)
-
-                            file.withInputStream { input ->
-                                byte[] buffer = new byte[4096]
-                                int bytesRead
-
-                                while ((bytesRead = input.read(buffer)) != -1) {
-                                    zipOutputStream.write(buffer, 0, bytesRead)
-                                }
-                            }
-
-                            zipOutputStream.closeEntry()
-                        }
-                    } finally {
-                        zipOutputStream.close()
-                    }
-
-                    echo 'railway-reservation.zip created successfully'
-                }
-            }
-        }
-    }
-
-    post {
-        success {
-            echo 'Railway Reservation Build Successful!'
-        }
-
-        failure {
-            echo 'Railway Reservation Build Failed!'
-        }
+    steps {
+        echo 'Creating application package'
+        sh '''
+            rm -f railway-reservation.zip
+            zip railway-reservation.zip index.html style.css script.js
+        '''
     }
 }
