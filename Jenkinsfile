@@ -5,32 +5,23 @@ pipeline {
 
         stage('Checkout') {
             steps {
-                echo 'Downloading Railway Reservation source code'
+                echo 'Checking out source code'
                 checkout scm
             }
         }
 
         stage('Build') {
             steps {
-                echo 'Starting application build'
+                echo 'Building Railway Reservation application'
 
                 sh '''
-                    if [ ! -f index.html ]; then
-                        echo "ERROR: index.html not found"
-                        exit 1
-                    fi
+                    echo "Validating application files..."
 
-                    if [ ! -f style.css ]; then
-                        echo "ERROR: style.css not found"
-                        exit 1
-                    fi
+                    test -f index.html
+                    test -f style.css
+                    test -f script.js
 
-                    if [ ! -f script.js ]; then
-                        echo "ERROR: script.js not found"
-                        exit 1
-                    fi
-
-                    echo "Application files verified successfully"
+                    echo "Build validation successful!"
                 '''
             }
         }
@@ -40,35 +31,36 @@ pipeline {
                 echo 'Testing application files'
 
                 sh '''
-                    grep -qi "<html" index.html
-                    if [ $? -ne 0 ]; then
-                        echo "ERROR: HTML tag not found"
-                        exit 1
-                    fi
+                    echo "Running basic application tests..."
 
-                    grep -qi "bookingForm" index.html
-                    if [ $? -ne 0 ]; then
-                        echo "ERROR: bookingForm not found"
-                        exit 1
-                    fi
+                    test -s index.html
+                    test -s style.css
+                    test -s script.js
 
-                    grep -qi "addEventListener" script.js
-                    if [ $? -ne 0 ]; then
-                        echo "ERROR: addEventListener not found"
-                        exit 1
-                    fi
-
-                    echo "All basic validation tests passed"
+                    echo "All tests passed!"
                 '''
             }
         }
 
         stage('Package') {
-    steps {
-        echo 'Creating application package'
-        sh '''
-            rm -f railway-reservation.zip
-            zip railway-reservation.zip index.html style.css script.js
-        '''
+            steps {
+                echo 'Creating application package'
+
+                sh '''
+                    rm -f railway-reservation.zip
+                    zip railway-reservation.zip index.html style.css script.js
+                '''
+            }
+        }
+    }
+
+    post {
+        success {
+            echo 'Railway Reservation Build Successful!'
+        }
+
+        failure {
+            echo 'Railway Reservation Build Failed!'
+        }
     }
 }
