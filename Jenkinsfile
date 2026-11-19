@@ -15,10 +15,22 @@ pipeline {
                 echo 'Starting application build'
 
                 sh '''
-                test -f index.html
-                test -f style.css
-                test -f script.js
-                echo "Application files verified successfully"
+                    if [ ! -f index.html ]; then
+                        echo "ERROR: index.html not found"
+                        exit 1
+                    fi
+
+                    if [ ! -f style.css ]; then
+                        echo "ERROR: style.css not found"
+                        exit 1
+                    fi
+
+                    if [ ! -f script.js ]; then
+                        echo "ERROR: script.js not found"
+                        exit 1
+                    fi
+
+                    echo "Application files verified successfully"
                 '''
             }
         }
@@ -28,10 +40,25 @@ pipeline {
                 echo 'Testing application files'
 
                 sh '''
-                grep -qi "<html" index.html
-                grep -qi "bookingForm" index.html
-                grep -qi "addEventListener" script.js
-                echo "All basic validation tests passed"
+                    grep -qi "<html" index.html
+                    if [ $? -ne 0 ]; then
+                        echo "ERROR: HTML tag not found"
+                        exit 1
+                    fi
+
+                    grep -qi "bookingForm" index.html
+                    if [ $? -ne 0 ]; then
+                        echo "ERROR: bookingForm not found"
+                        exit 1
+                    fi
+
+                    grep -qi "addEventListener" script.js
+                    if [ $? -ne 0 ]; then
+                        echo "ERROR: addEventListener not found"
+                        exit 1
+                    fi
+
+                    echo "All basic validation tests passed"
                 '''
             }
         }
@@ -41,8 +68,21 @@ pipeline {
                 echo 'Creating application package'
 
                 sh '''
-                rm -f railway-reservation.zip
-                zip railway-reservation.zip index.html style.css script.js
+                    rm -f railway-reservation.zip
+
+                    python3 -c "
+import zipfile
+
+files = ['index.html', 'style.css', 'script.js']
+
+with zipfile.ZipFile('railway-reservation.zip', 'w', zipfile.ZIP_DEFLATED) as z:
+    for file in files:
+        z.write(file)
+
+print('railway-reservation.zip created successfully')
+"
+
+                    echo "Application package created successfully"
                 '''
             }
         }
